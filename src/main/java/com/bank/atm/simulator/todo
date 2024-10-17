@@ -1,0 +1,20 @@
+controller: api
+dto:
+entity(model)/constants: enums, account status
+exception
+repo
+service
+
+1. basic func
+- user creation
+- user auth
+- bal check
+- deposit
+- withdrawal
+- pin change
+
+2. identify models
+
+3. relationship
+
+4. @get/set/etc/etc
