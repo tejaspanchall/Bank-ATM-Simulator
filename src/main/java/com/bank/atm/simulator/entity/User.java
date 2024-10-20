@@ -12,6 +12,7 @@ public class User {
     private String name;
     private String cardNumber;
     private String atmPin;
+    private Double balance;
 
     public Long getId() {
         return id;
@@ -43,5 +44,13 @@ public class User {
 
     public void setAtmPin(String atmPin) {
         this.atmPin = atmPin;
+    }
+
+    public Double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Double balance) {
+        this.balance = balance;
     }
 }

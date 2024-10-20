@@ -4,11 +4,13 @@ public class UserDTO {
     private String name;
     private String cardNumber;
     private String atmPin;
+    private Double balance;
 
-    public UserDTO(String name, String cardNumber, String atmPin){
+    public UserDTO(String name, String cardNumber, String atmPin, Double balance){
         this.name = name;
         this.cardNumber = cardNumber;
         this.atmPin = atmPin;
+        this.balance = balance;
     }
 
     public String getName() {
@@ -33,5 +35,13 @@ public class UserDTO {
 
     public void setAtmPin(String atmPin) {
         this.atmPin = atmPin;
+    }
+
+    public Double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Double balance) {
+        this.balance = balance;
     }
 }

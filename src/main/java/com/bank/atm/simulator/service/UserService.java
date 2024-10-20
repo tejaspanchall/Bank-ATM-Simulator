@@ -22,10 +22,11 @@ public class UserService {
         user.setName(name);
         user.setCardNumber(cardNumber);
         user.setAtmPin(atmPin);
+        user.setBalance(10000.0);
 
         userRepository.save(user);
 
-        return new UserDTO(user.getName(), user.getCardNumber(), user.getAtmPin());
+        return new UserDTO(user.getName(), user.getCardNumber(), user.getAtmPin(), user.getBalance());
     }
 
     private String generateCardNumber() {
