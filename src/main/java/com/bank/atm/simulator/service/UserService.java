@@ -2,10 +2,13 @@ package com.bank.atm.simulator.service;
 
 import com.bank.atm.simulator.dto.UserDTO;
 import com.bank.atm.simulator.entity.User;
+import com.bank.atm.simulator.entity.Withdrawal;
 import com.bank.atm.simulator.repository.UserRepository;
+import com.bank.atm.simulator.repository.WithdrawalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.Optional;
 
 @Service
@@ -40,5 +43,90 @@ public class UserService {
     public boolean validateUser(String cardNumber, String atmPin) {
         Optional<User> user = userRepository.findByCardNumber(cardNumber);
         return user.isPresent() && user.get().getAtmPin().equals(atmPin);
+    }
+
+    public Double getBalance(String cardNumber, String atmPin) {
+        Optional<User> user = userRepository.findByCardNumber(cardNumber);
+        if (user.isPresent() && user.get().getAtmPin().equals(atmPin)) {
+            return user.get().getBalance();
+        } else {
+            return null;
+        }
+    }
+
+    public boolean changePin(String cardNumber, String oldPin, String newPin) {
+        Optional<User> user = userRepository.findByCardNumber(cardNumber);
+        if (user.isPresent() && user.get().getAtmPin().equals(oldPin)) {
+            User updatedUser = user.get();
+            updatedUser.setAtmPin(newPin);
+            userRepository.save(updatedUser);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void deposit(String cardNumber, String atmPin, Double amount) {
+        if (amount > 50000) {
+            throw new IllegalArgumentException("Cannot deposit more than ₹50,000 in a single transaction.");
+        }
+
+        Optional<User> user = userRepository.findByCardNumber(cardNumber);
+        if (user.isPresent() && user.get().getAtmPin().equals(atmPin)) {
+            User existingUser = user.get();
+            Double currentBalance = existingUser.getBalance();
+            existingUser.setBalance(currentBalance + amount);
+
+            userRepository.save(existingUser);
+        } else {
+            throw new IllegalArgumentException("Invalid card number or ATM PIN.");
+        }
+    }
+
+    @Autowired
+    private WithdrawalRepository withdrawalRepository;
+
+    public String withdraw(String cardNumber, String atmPin, Double amount, boolean otherAmount) {
+        Optional<User> user = userRepository.findByCardNumber(cardNumber);
+
+        if (user.isPresent() && user.get().getAtmPin().equals(atmPin)) {
+            User currentUser = user.get();
+
+            Double totalWithdrawnIn24Hours = withdrawalRepository.getTotalWithdrawnInLast24Hours(currentUser.getId());
+            if (totalWithdrawnIn24Hours + amount > 30000) {
+                throw new IllegalArgumentException("Daily withdrawal limit of ₹30,000 exceeded.");
+            }
+
+            if (otherAmount && !isValidAmountForNotes(amount)) {
+                throw new IllegalArgumentException("Invalid amount. ATM only contains ₹100, ₹200, and ₹500 notes.");
+            }
+
+            if (currentUser.getBalance() < amount) {
+                throw new IllegalArgumentException("Insufficient balance.");
+            }
+
+            currentUser.setBalance(currentUser.getBalance() - amount);
+            userRepository.save(currentUser);
+
+            Withdrawal withdrawal = new Withdrawal();
+            withdrawal.setUserId(currentUser.getId());
+            withdrawal.setAmount(amount);
+            withdrawal.setTimestamp(new Date());
+            withdrawalRepository.save(withdrawal);
+
+            return "Withdrawal successful!";
+        } else {
+            throw new IllegalArgumentException("Invalid card number or ATM PIN.");
+        }
+    }
+
+    private boolean isValidAmountForNotes(Double amount) {
+        double remaining = amount;
+        int[] notes = {500, 200, 100};
+        for (int note : notes) {
+            int count = (int) (remaining / note);
+            remaining -= count * note;
+        }
+        return remaining == 0;
     }
 }
