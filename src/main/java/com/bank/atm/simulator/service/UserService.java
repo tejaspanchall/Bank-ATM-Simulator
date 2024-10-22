@@ -8,6 +8,7 @@ import com.bank.atm.simulator.repository.WithdrawalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Optional;
 
@@ -16,6 +17,7 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+    private WithdrawalRepository withdrawalRepository;
 
     public UserDTO createUser(String name) {
         String cardNumber = generateCardNumber();
@@ -83,9 +85,6 @@ public class UserService {
         }
     }
 
-    @Autowired
-    private WithdrawalRepository withdrawalRepository;
-
     public String withdraw(String cardNumber, String atmPin, Double amount, boolean otherAmount) {
         Optional<User> user = userRepository.findByCardNumber(cardNumber);
 
@@ -112,6 +111,7 @@ public class UserService {
             withdrawal.setUserId(currentUser.getId());
             withdrawal.setAmount(amount);
             withdrawal.setTimestamp(new Date());
+
             withdrawalRepository.save(withdrawal);
 
             return "Withdrawal successful!";
@@ -128,5 +128,15 @@ public class UserService {
             remaining -= count * note;
         }
         return remaining == 0;
+    }
+
+    public Double getTotalWithdrawnInLast24Hours(Long userId) {
+        // Calculate the time limit for the past 24 hours
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.HOUR_OF_DAY, -24);
+        Date timeLimit = calendar.getTime();
+
+        // Call the repository method to get the total amount withdrawn in the last 24 hours
+        return withdrawalRepository.getTotalWithdrawnInLast24Hours(userId);
     }
 }

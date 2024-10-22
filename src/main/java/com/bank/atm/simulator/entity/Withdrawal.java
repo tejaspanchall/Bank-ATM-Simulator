@@ -1,11 +1,10 @@
 package com.bank.atm.simulator.entity;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-
+import jakarta.persistence.*;
 import java.util.Date;
 
+@Entity
+@Table(name = "withdrawals")
 public class Withdrawal {
 
     @Id
@@ -14,6 +13,15 @@ public class Withdrawal {
     private Long userId;
     private Double amount;
     private Date timestamp;
+
+    public Withdrawal() {
+    }
+
+    public Withdrawal(Long userId, Double amount, Date timestamp) {
+        this.userId = userId;
+        this.amount = amount;
+        this.timestamp = timestamp;
+    }
 
     public Long getId() {
         return id;
