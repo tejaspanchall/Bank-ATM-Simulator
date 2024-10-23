@@ -1,8 +1,7 @@
 package com.bank.atm.simulator.controller;
 
 import com.bank.atm.simulator.dto.*;
-import com.bank.atm.simulator.service.UserService;
-import com.bank.atm.simulator.service.WithdrawalService;
+import com.bank.atm.simulator.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,17 +12,29 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     @Autowired
-    private UserService userService;
+    private UserCreation userCreation;
+    
+    @Autowired
+    private UserValidation userValidation;
+
+    @Autowired
+    private BalanceEnquiry balanceEnquiry;
+
+    @Autowired
+    private ChangeAtmPin changeAtmPin;
+
+    @Autowired
+    private CashDeposit cashDeposit;
 
     @PostMapping("/signup")
     public ResponseEntity<UserDTO> signup(@RequestBody SignupRequest signupRequest) {
-        UserDTO newUser = userService.createUser(signupRequest.getName());
+        UserDTO newUser = userCreation.createUser(signupRequest.getName());
         return ResponseEntity.ok(newUser);
     }
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
-        boolean isValid = userService.validateUser(loginRequest.getCardNumber(), loginRequest.getAtmPin());
+        boolean isValid = userValidation.validateUser(loginRequest.getCardNumber(), loginRequest.getAtmPin());
 
         if (isValid) {
             return ResponseEntity.ok("Login successful");
@@ -34,7 +45,7 @@ public class UserController {
 
     @PostMapping("/balance")
     public ResponseEntity<Double> balanceInquiry(@RequestBody BalanceRequest balanceRequest) {
-        Double balance = userService.getBalance(balanceRequest.getCardNumber(), balanceRequest.getAtmPin());
+        Double balance = balanceEnquiry.getBalance(balanceRequest.getCardNumber(), balanceRequest.getAtmPin());
 
         if (balance == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -44,7 +55,7 @@ public class UserController {
 
     @PostMapping("/changePin")
     public ResponseEntity<String> changePin(@RequestBody PinChangeRequest pinChangeRequest) {
-        boolean isPinChanged = userService.changePin(pinChangeRequest.getCardNumber(), pinChangeRequest.getOldPin(), pinChangeRequest.getNewPin());
+        boolean isPinChanged = changeAtmPin.changePin(pinChangeRequest.getCardNumber(), pinChangeRequest.getOldPin(), pinChangeRequest.getNewPin());
 
         if (isPinChanged) {
             return ResponseEntity.ok("PIN changed successfully");
@@ -56,32 +67,10 @@ public class UserController {
     @PostMapping("/deposit")
     public ResponseEntity<String> deposit(@RequestBody DepositRequest depositRequest) {
         try {
-            userService.deposit(depositRequest.getCardNumber(), depositRequest.getAtmPin(), depositRequest.getAmount());
+            cashDeposit.deposit(depositRequest.getCardNumber(), depositRequest.getAtmPin(), depositRequest.getAmount());
             return ResponseEntity.ok("Deposit successful!");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
-    }
-
-    @RequestMapping("/withdrawal")
-    public class WithdrawalController {
-
-        @Autowired
-        private WithdrawalService withdrawalService;
-
-        @PostMapping
-        public ResponseEntity<String> withdrawAmount(@RequestBody WithdrawalRequest withdrawalRequest) {
-            try {
-                withdrawalService.withdraw(
-                        withdrawalRequest.getCardNumber(),
-                        withdrawalRequest.getAtmPin(),
-                        withdrawalRequest.getAmount(),
-                        withdrawalRequest.isOtherAmount()
-                );
-                return ResponseEntity.ok("Withdrawal successful.");
-            } catch (Exception e) {
-                return ResponseEntity.badRequest().body(e.getMessage());
-            }
         }
     }
 
