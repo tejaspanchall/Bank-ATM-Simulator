@@ -13,7 +13,7 @@ public class UserController {
 
     @Autowired
     private UserCreation userCreation;
-    
+
     @Autowired
     private UserValidation userValidation;
 
@@ -25,6 +25,9 @@ public class UserController {
 
     @Autowired
     private CashDeposit cashDeposit;
+
+    @Autowired
+    private CashWithdrawal cashWithdrawal;
 
     @PostMapping("/signup")
     public ResponseEntity<UserDTO> signup(@RequestBody SignupRequest signupRequest) {
@@ -71,6 +74,16 @@ public class UserController {
             return ResponseEntity.ok("Deposit successful!");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/withdraw")
+    public ResponseEntity<String> withdraw(@RequestBody WithdrawalRequest withdrawalRequest) {
+        try {
+            cashWithdrawal.withdraw(withdrawalRequest.getUserId(), withdrawalRequest.getAmount());
+            return ResponseEntity.ok("Withdrawal successful.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
