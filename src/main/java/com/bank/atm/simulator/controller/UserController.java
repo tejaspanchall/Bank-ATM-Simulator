@@ -27,7 +27,7 @@ public class UserController {
     private CashDeposit cashDeposit;
 
     @Autowired
-    private CashWithdrawal cashWithdrawal;
+    private CashWithdrawal cashWithdrawal; // Autowire CashWithdrawal service
 
     @PostMapping("/signup")
     public ResponseEntity<UserDTO> signup(@RequestBody SignupRequest signupRequest) {
@@ -78,12 +78,16 @@ public class UserController {
     }
 
     @PostMapping("/withdraw")
-    public ResponseEntity<String> withdraw(@RequestBody WithdrawalRequest withdrawalRequest) {
+    public ResponseEntity<WithdrawalResponse> withdraw(@RequestBody WithdrawalRequest withdrawalRequest) {
         try {
-            cashWithdrawal.withdraw(withdrawalRequest.getUserId(), withdrawalRequest.getAmount());
-            return ResponseEntity.ok("Withdrawal successful.");
+            WithdrawalResponse response = cashWithdrawal.withdraw(withdrawalRequest);
+            if (response.getMessage().equals("Withdrawal successful")) {
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WithdrawalResponse(e.getMessage(), null));
         }
     }
 

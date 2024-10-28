@@ -1,25 +1,24 @@
 package com.bank.atm.simulator.dto;
 
 public class WithdrawalRequest {
-    private Long userId;
+    private String cardNumber;
+    private String atmPin;
     private Double amount;
 
-    // Default constructor
-    public WithdrawalRequest() {}
-
-    // Constructor
-    public WithdrawalRequest(Long userId, Double amount) {
-        this.userId = userId;
-        this.amount = amount;
+    public String getCardNumber() {
+        return cardNumber;
     }
 
-    // Getters and setters
-    public Long getUserId() {
-        return userId;
+    public void setCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public String getAtmPin() {
+        return atmPin;
+    }
+
+    public void setAtmPin(String atmPin) {
+        this.atmPin = atmPin;
     }
 
     public Double getAmount() {

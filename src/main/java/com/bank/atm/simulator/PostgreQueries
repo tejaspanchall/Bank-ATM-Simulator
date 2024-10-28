@@ -1,0 +1,26 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    card_number VARCHAR(20) UNIQUE NOT NULL,
+    atm_pin VARCHAR(10) NOT NULL,
+    balance DECIMAL(15, 2) NOT NULL
+);
+
+CREATE TABLE withdrawals (
+    id SERIAL PRIMARY KEY,
+    card_number VARCHAR(20) NOT NULL REFERENCES users(card_number),
+    amount DECIMAL(15, 2) NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE cash_inventory (
+    id SERIAL PRIMARY KEY,
+    denomination INT NOT NULL,
+    quantity INT NOT NULL
+);
+
+INSERT INTO cash_inventory (denomination, quantity) VALUES
+(500, 100),
+(200, 200),
+(100, 500);

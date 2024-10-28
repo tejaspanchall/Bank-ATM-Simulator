@@ -1,5 +1,7 @@
 package com.bank.atm.simulator.service;
 
+import com.bank.atm.simulator.dto.WithdrawalRequest;
+import com.bank.atm.simulator.dto.WithdrawalResponse;
 import com.bank.atm.simulator.entity.CashInventory;
 import com.bank.atm.simulator.entity.User;
 import com.bank.atm.simulator.entity.Withdrawal;
@@ -8,18 +10,14 @@ import com.bank.atm.simulator.repository.UserRepository;
 import com.bank.atm.simulator.repository.WithdrawalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CashWithdrawal {
-
-    private static final double DAILY_WITHDRAW_LIMIT = 30000;
-
-    @Autowired
-    private WithdrawalRepository withdrawalRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -27,73 +25,65 @@ public class CashWithdrawal {
     @Autowired
     private CashInventoryRepository cashInventoryRepository;
 
-    public CashWithdrawal(WithdrawalRepository withdrawalRepository) {
-        this.withdrawalRepository = withdrawalRepository;
-    }
+    @Autowired
+    private WithdrawalRepository withdrawalRepository;
 
-    public void withdraw(Long userId, Double amount) throws Exception {
-        if (amount % 100 != 0) {
-            throw new Exception("Amount must be a multiple of 100, 200, or 500.");
+    @Transactional
+    public WithdrawalResponse withdraw(WithdrawalRequest request) {
+        Optional<User> optionalUser = userRepository.findByCardNumber(request.getCardNumber());
+
+        // Check if user exists
+        if (optionalUser.isEmpty()) {
+            return new WithdrawalResponse("Invalid card number", null);
         }
 
-        // Fetch user
-        User user = userRepository.findById(userId).orElseThrow(() -> new Exception("User not found."));
+        User user = optionalUser.get();
 
-        // Check user balance
-        if (user.getBalance() < amount) {
-            throw new Exception("Insufficient balance.");
+        // Validate PIN
+        if (!user.getAtmPin().equals(request.getAtmPin())) {
+            return new WithdrawalResponse("Invalid PIN", null);
         }
 
-        // Fetch cash inventory
-        CashInventory cashInventory = cashInventoryRepository.findTopByOrderByIdAsc();
-        if (cashInventory == null) {
-            throw new Exception("Cash inventory not found.");
+        // Check for sufficient funds
+        if (user.getBalance() < request.getAmount()) {
+            return new WithdrawalResponse("Insufficient funds", null);
         }
 
-        // Calculate the required notes
-        int originalAmount = amount.intValue();
-        int remainingAmount = originalAmount;
+        // Check and update cash inventory
+        List<CashInventory> inventory = cashInventoryRepository.findAllByOrderByDenominationDesc();
+        double remainingAmount = request.getAmount();
 
-        // Check if enough ₹500 notes are available
-        int fiveHundredNotesNeeded = Math.min(remainingAmount / 500, cashInventory.getFiveHundredCount());
-        remainingAmount -= fiveHundredNotesNeeded * 500;
-
-        // Check if enough ₹200 notes are available
-        int twoHundredNotesNeeded = Math.min(remainingAmount / 200, cashInventory.getTwoHundredCount());
-        remainingAmount -= twoHundredNotesNeeded * 200;
-
-        // Check if enough ₹100 notes are available
-        int hundredNotesNeeded = Math.min(remainingAmount / 100, cashInventory.getHundredCount());
-        remainingAmount -= hundredNotesNeeded * 100;
-
-        // If remaining amount is not 0, then we don't have enough notes
-        if (remainingAmount != 0) {
-            throw new Exception("ATM doesn't have enough notes for this amount.");
+        for (CashInventory cash : inventory) {
+            int neededNotes = (int) (remainingAmount / cash.getDenomination());
+            if (neededNotes > 0) {
+                if (cash.getQuantity() >= neededNotes) {
+                    cash.setQuantity(cash.getQuantity() - neededNotes);
+                    remainingAmount -= neededNotes * cash.getDenomination();
+                } else {
+                    int availableNotes = cash.getQuantity();
+                    cash.setQuantity(0);
+                    remainingAmount -= availableNotes * cash.getDenomination();
+                }
+                cashInventoryRepository.save(cash);
+            }
         }
 
-        // Update cash inventory
-        cashInventory.setFiveHundredCount(cashInventory.getFiveHundredCount() - fiveHundredNotesNeeded);
-        cashInventory.setTwoHundredCount(cashInventory.getTwoHundredCount() - twoHundredNotesNeeded);
-        cashInventory.setHundredCount(cashInventory.getHundredCount() - hundredNotesNeeded);
-        cashInventoryRepository.save(cashInventory);
+        // If remaining amount is still greater than 0, ATM has insufficient cash
+        if (remainingAmount > 0) {
+            return new WithdrawalResponse("ATM does not have enough cash", null);
+        }
 
-        // Update user balance
-        user.setBalance(user.getBalance() - originalAmount);
+        // Record the withdrawal transaction
+        Withdrawal withdrawal = new Withdrawal();
+        withdrawal.setCardNumber(request.getCardNumber());
+        withdrawal.setAmount(request.getAmount());
+        withdrawal.setTimestamp(LocalDateTime.now());
+        withdrawalRepository.save(withdrawal);
+
+        // Deduct balance from user account and save
+        user.setBalance(user.getBalance() - request.getAmount());
         userRepository.save(user);
 
-        // Log the withdrawal
-        withdrawalRepository.save(new Withdrawal(userId, BigDecimal.valueOf(originalAmount), new Date()));
-
-    }
-
-    public BigDecimal getTotalWithdrawnInLast24Hours(Long userId) {
-        // Calculate the timestamp for 24 hours ago
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.HOUR_OF_DAY, -24);
-        Date twentyFourHoursAgo = calendar.getTime();
-
-        // Use the repository method to get total withdrawals since the calculated time
-        Double totalWithdrawn = withdrawalRepository.getTotalWithdrawnSince(userId, twentyFourHoursAgo);
-        return BigDecimal.valueOf(totalWithdrawn);
+        return new WithdrawalResponse("Withdrawal successful", user.getBalance());
     }
 }

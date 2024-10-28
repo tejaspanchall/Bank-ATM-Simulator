@@ -10,48 +10,32 @@ public class CashInventory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "hundred_count", nullable = false)
-    private int hundredCount;
+    private int denomination;
 
-    @Column(name = "two_hundred_count", nullable = false)
-    private int twoHundredCount;
+    private int quantity;
 
-    @Column(name = "five_hundred_count", nullable = false)
-    private int fiveHundredCount;
-
-    // Default constructor
-    public CashInventory() {
-
+    // Getters and Setters
+    public Long getId() {
+        return id;
     }
 
-    // Constructor
-    public CashInventory(int hundredCount, int twoHundredCount, int fiveHundredCount) {
-        this.hundredCount = hundredCount;
-        this.twoHundredCount = twoHundredCount;
-        this.fiveHundredCount = fiveHundredCount;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public int getHundredCount() {
-        return hundredCount;
+    public int getDenomination() {
+        return denomination;
     }
 
-    public void setHundredCount(int hundredCount) {
-        this.hundredCount = hundredCount;
+    public void setDenomination(int denomination) {
+        this.denomination = denomination;
     }
 
-    public int getTwoHundredCount() {
-        return twoHundredCount;
+    public int getQuantity() {
+        return quantity;
     }
 
-    public void setTwoHundredCount(int twoHundredCount) {
-        this.twoHundredCount = twoHundredCount;
-    }
-
-    public int getFiveHundredCount() {
-        return fiveHundredCount;
-    }
-
-    public void setFiveHundredCount(int fiveHundredCount) {
-        this.fiveHundredCount = fiveHundredCount;
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
 }

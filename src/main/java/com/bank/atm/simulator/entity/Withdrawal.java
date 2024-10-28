@@ -1,8 +1,7 @@
 package com.bank.atm.simulator.entity;
 
 import jakarta.persistence.*;
-import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "withdrawals")
@@ -12,26 +11,11 @@ public class Withdrawal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id")
-    private Long userId;
+    private String cardNumber;
+    private Double amount;
+    private LocalDateTime timestamp;
 
-    @Column(name = "amount", precision = 12, scale = 2)  // Use BigDecimal for currency
-    private BigDecimal amount;
-
-    @Column(name = "timestamp")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date timestamp;
-
-    // Constructors
-    public Withdrawal() {}
-
-    public Withdrawal(Long userId, BigDecimal amount, Date timestamp) {
-        this.userId = userId;
-        this.amount = amount;
-        this.timestamp = timestamp;
-    }
-
-    // Getters and setters
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -40,27 +24,27 @@ public class Withdrawal {
         this.id = id;
     }
 
-    public Long getUserId() {
-        return userId;
+    public String getCardNumber() {
+        return cardNumber;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
     }
 
-    public BigDecimal getAmount() {
+    public Double getAmount() {
         return amount;
     }
 
-    public void setAmount(BigDecimal amount) {
+    public void setAmount(Double amount) {
         this.amount = amount;
     }
 
-    public Date getTimestamp() {
+    public LocalDateTime getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp) {
+    public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
 }
