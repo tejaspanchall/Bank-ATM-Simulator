@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "cardless_withdrawals")
+@Table(name = "cardless_withdrawal")
 public class CardlessWithdrawal {
 
     @Id
@@ -14,23 +14,20 @@ public class CardlessWithdrawal {
     private double amount;
     private LocalDateTime timestamp;
 
-    // Constructor, Getters, and Setters
     public CardlessWithdrawal() {}
 
-    public CardlessWithdrawal(double amount) {
+    public CardlessWithdrawal(double amount, LocalDateTime timestamp) {
         this.amount = amount;
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = timestamp;
     }
 
-    public Long getId() {
-        return id;
-    }
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public double getAmount() {
-        return amount;
-    }
+    public double getAmount() { return amount; }
+    public void setAmount(double amount) { this.amount = amount; }
 
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
+    public LocalDateTime getTimestamp() { return timestamp; }
+    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
 }

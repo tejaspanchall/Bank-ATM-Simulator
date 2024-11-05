@@ -1,26 +1,15 @@
 package com.bank.atm.simulator.dto;
 
 public class CardlessWithdrawalResponse {
-    private String qrCodeUrl;
-    private String message;
-    private boolean success;
 
-    // Constructors
+    private String message;
+    private String qrCodeBase64;
+
     public CardlessWithdrawalResponse() {}
 
-    public CardlessWithdrawalResponse(String qrCodeUrl, String message, boolean success) {
-        this.qrCodeUrl = qrCodeUrl;
+    public CardlessWithdrawalResponse(String message, String qrCodeBase64) {
         this.message = message;
-        this.success = success;
-    }
-
-    // Getters and Setters
-    public String getQrCodeUrl() {
-        return qrCodeUrl;
-    }
-
-    public void setQrCodeUrl(String qrCodeUrl) {
-        this.qrCodeUrl = qrCodeUrl;
+        this.qrCodeBase64 = qrCodeBase64;
     }
 
     public String getMessage() {
@@ -31,11 +20,11 @@ public class CardlessWithdrawalResponse {
         this.message = message;
     }
 
-    public boolean isSuccess() {
-        return success;
+    public String getQrCodeBase64() {
+        return qrCodeBase64;
     }
 
-    public void setSuccess(boolean success) {
-        this.success = success;
+    public void setQrCodeBase64(String qrCodeBase64) {
+        this.qrCodeBase64 = qrCodeBase64;
     }
 }

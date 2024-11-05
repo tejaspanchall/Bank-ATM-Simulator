@@ -1,13 +1,18 @@
 package com.bank.atm.simulator.controller;
 
 import com.bank.atm.simulator.dto.*;
+import com.bank.atm.simulator.entity.CardlessWithdrawal;
 import com.bank.atm.simulator.service.*;
-import com.razorpay.RazorpayException;
-import org.json.JSONObject;
+import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.Base64;
 
 @RestController
 @RequestMapping("/api")
@@ -96,33 +101,29 @@ public class UserController {
         }
     }
 
-    @PostMapping("/cardlessWithdraw")
-    public ResponseEntity<CardlessWithdrawalResponse> cardlessWithdraw(@RequestBody CardlessWithdrawalRequest requestDTO) {
+    @PostMapping("/generateUpiQr")
+    public ResponseEntity<CardlessWithdrawalResponse> generateUpiQr(@RequestBody CardlessWithdrawalRequest requestDTO) {
+        double amount = requestDTO.getAmount();
         try {
-            JSONObject qrCodeResponse = cardlessWithdrawal.createUpiQrCode(requestDTO.getAmount());
-            CardlessWithdrawalResponse responseDTO = new CardlessWithdrawalResponse(
-                    qrCodeResponse.get("short_url").toString(),
-                    "QR code generated successfully",
-                    true
-            );
-            return ResponseEntity.ok(responseDTO);
-        } catch (RazorpayException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    new CardlessWithdrawalResponse(null, "QR code generation failed", false)
-            );
+            BufferedImage qrCode = cardlessWithdrawal.generateUPIQRCode(amount);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(qrCode, "png", baos);
+            String base64QRCode = Base64.getEncoder().encodeToString(baos.toByteArray());
+            return ResponseEntity.ok(new CardlessWithdrawalResponse("QR Code generated", base64QRCode));
+        } catch (WriterException | IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new CardlessWithdrawalResponse("Failed to generate QR Code", null));
         }
     }
 
-    @PostMapping("/verifyCardlessWithdraw")
-    public ResponseEntity<CardlessWithdrawalResponse> verifyCardlessWithdraw(@RequestBody PaymentVerificationRequest requestDTO) {
-        boolean success = cardlessWithdrawal.verifyPaymentAndWithdraw(requestDTO.getPaymentId(), requestDTO.getAmount());
-        if (success) {
-            return ResponseEntity.ok(new CardlessWithdrawalResponse(null, "Cardless withdrawal successful", true));
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    new CardlessWithdrawalResponse(null, "Payment verification failed", false)
-            );
+    @PostMapping("/cardlessWithdraw")
+    public ResponseEntity<CardlessWithdrawalResponse> cardlessWithdraw(@RequestBody CardlessWithdrawalRequest requestDTO) {
+        String result = cardlessWithdrawal.processCardlessWithdrawal(requestDTO.getAmount());
+        if (result.equals("Withdrawal successful")) {
+            return ResponseEntity.ok(new CardlessWithdrawalResponse(result, null));
         }
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
+                .body(new CardlessWithdrawalResponse(result, null));
     }
 
     @PostMapping("/exit")
