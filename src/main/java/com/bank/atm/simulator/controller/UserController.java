@@ -2,6 +2,8 @@ package com.bank.atm.simulator.controller;
 
 import com.bank.atm.simulator.dto.*;
 import com.bank.atm.simulator.service.*;
+import com.razorpay.RazorpayException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,9 @@ public class UserController {
 
     @Autowired
     private CashWithdrawal cashWithdrawal;
+
+    @Autowired
+    private CardlessWithdrawal cardlessWithdrawal;
 
     @PostMapping("/signup")
     public ResponseEntity<UserDTO> signup(@RequestBody SignupRequest signupRequest) {
@@ -88,6 +93,35 @@ public class UserController {
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new WithdrawalResponse(e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/cardlessWithdraw")
+    public ResponseEntity<CardlessWithdrawalResponse> cardlessWithdraw(@RequestBody CardlessWithdrawalRequest requestDTO) {
+        try {
+            JSONObject qrCodeResponse = cardlessWithdrawal.createUpiQrCode(requestDTO.getAmount());
+            CardlessWithdrawalResponse responseDTO = new CardlessWithdrawalResponse(
+                    qrCodeResponse.get("short_url").toString(),
+                    "QR code generated successfully",
+                    true
+            );
+            return ResponseEntity.ok(responseDTO);
+        } catch (RazorpayException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new CardlessWithdrawalResponse(null, "QR code generation failed", false)
+            );
+        }
+    }
+
+    @PostMapping("/verifyCardlessWithdraw")
+    public ResponseEntity<CardlessWithdrawalResponse> verifyCardlessWithdraw(@RequestBody PaymentVerificationRequest requestDTO) {
+        boolean success = cardlessWithdrawal.verifyPaymentAndWithdraw(requestDTO.getPaymentId(), requestDTO.getAmount());
+        if (success) {
+            return ResponseEntity.ok(new CardlessWithdrawalResponse(null, "Cardless withdrawal successful", true));
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new CardlessWithdrawalResponse(null, "Payment verification failed", false)
+            );
         }
     }
 
