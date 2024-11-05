@@ -29,9 +29,6 @@ public class UserController {
     @Autowired
     private CashWithdrawal cashWithdrawal;
 
-    @Autowired
-    private CardlessWithdraw cardlessWithdraw;
-
     @PostMapping("/signup")
     public ResponseEntity<UserDTO> signup(@RequestBody SignupRequest signupRequest) {
         UserDTO newUser = userCreation.createUser(signupRequest.getName());
