@@ -3,16 +3,10 @@ package com.bank.atm.simulator.controller;
 import com.bank.atm.simulator.dto.*;
 import com.bank.atm.simulator.entity.CardlessWithdrawal;
 import com.bank.atm.simulator.service.*;
-import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.util.Base64;
 
 @RestController
 @RequestMapping("/api")
@@ -37,7 +31,7 @@ public class UserController {
     private CashWithdrawal cashWithdrawal;
 
     @Autowired
-    private CardlessWithdrawal cardlessWithdrawal;
+    private CardlessWithdraw cardlessWithdraw;
 
     @PostMapping("/signup")
     public ResponseEntity<UserDTO> signup(@RequestBody SignupRequest signupRequest) {
@@ -101,29 +95,31 @@ public class UserController {
         }
     }
 
-    @PostMapping("/generateUpiQr")
-    public ResponseEntity<CardlessWithdrawalResponse> generateUpiQr(@RequestBody CardlessWithdrawalRequest requestDTO) {
-        double amount = requestDTO.getAmount();
+    @PostMapping("/cardlessWithdraw")
+    public ResponseEntity<?> initiateCardlessWithdrawal(@RequestParam double amount) {
         try {
-            BufferedImage qrCode = cardlessWithdrawal.generateUPIQRCode(amount);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(qrCode, "png", baos);
-            String base64QRCode = Base64.getEncoder().encodeToString(baos.toByteArray());
-            return ResponseEntity.ok(new CardlessWithdrawalResponse("QR Code generated", base64QRCode));
-        } catch (WriterException | IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new CardlessWithdrawalResponse("Failed to generate QR Code", null));
+            // Create a new withdrawal transaction
+            CardlessWithdrawal withdrawal = cardlessWithdraw.initiateCardlessWithdrawal(amount);
+
+            // Return the transaction details, including the generated UPI URL
+            return ResponseEntity.ok(withdrawal);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to initiate withdrawal");
         }
     }
 
-    @PostMapping("/cardlessWithdraw")
-    public ResponseEntity<CardlessWithdrawalResponse> cardlessWithdraw(@RequestBody CardlessWithdrawalRequest requestDTO) {
-        String result = cardlessWithdrawal.processCardlessWithdrawal(requestDTO.getAmount());
-        if (result.equals("Withdrawal successful")) {
-            return ResponseEntity.ok(new CardlessWithdrawalResponse(result, null));
+    // Endpoint to confirm a cardless withdrawal once the payment is completed
+    @PostMapping("/confirmCardlessWithdraw")
+    public ResponseEntity<String> confirmCardlessWithdrawal(@RequestParam Long transactionId) {
+        try {
+            // Confirm the transaction by transactionId
+            String result = cardlessWithdraw.confirmCardlessWithdrawal(transactionId);
+
+            // Return the result of the confirmation
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to confirm withdrawal");
         }
-        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
-                .body(new CardlessWithdrawalResponse(result, null));
     }
 
     @PostMapping("/exit")

@@ -1,17 +1,15 @@
 package com.bank.atm.simulator.dto;
 
 public class CardlessWithdrawalResponse {
-
     private String message;
-    private String qrCodeBase64;
+    private String qrCodeImageUrl;
 
-    public CardlessWithdrawalResponse() {}
-
-    public CardlessWithdrawalResponse(String message, String qrCodeBase64) {
+    public CardlessWithdrawalResponse(String message, String qrCodeImageUrl) {
         this.message = message;
-        this.qrCodeBase64 = qrCodeBase64;
+        this.qrCodeImageUrl = qrCodeImageUrl;
     }
 
+    // Getters and Setters
     public String getMessage() {
         return message;
     }
@@ -20,11 +18,11 @@ public class CardlessWithdrawalResponse {
         this.message = message;
     }
 
-    public String getQrCodeBase64() {
-        return qrCodeBase64;
+    public String getQrCodeImageUrl() {
+        return qrCodeImageUrl;
     }
 
-    public void setQrCodeBase64(String qrCodeBase64) {
-        this.qrCodeBase64 = qrCodeBase64;
+    public void setQrCodeImageUrl(String qrCodeImageUrl) {
+        this.qrCodeImageUrl = qrCodeImageUrl;
     }
 }

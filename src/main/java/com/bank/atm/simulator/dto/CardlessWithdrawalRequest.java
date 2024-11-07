@@ -1,15 +1,9 @@
 package com.bank.atm.simulator.dto;
 
 public class CardlessWithdrawalRequest {
-
     private double amount;
 
-    public CardlessWithdrawalRequest() {}
-
-    public CardlessWithdrawalRequest(double amount) {
-        this.amount = amount;
-    }
-
+    // Getters and Setters
     public double getAmount() {
         return amount;
     }

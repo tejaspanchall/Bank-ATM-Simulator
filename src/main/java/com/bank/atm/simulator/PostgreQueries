@@ -32,7 +32,9 @@ INSERT INTO cash_inventory (denomination, quantity) VALUES
 (100, 500);
 
 CREATE TABLE cardless_withdrawals (
-    id SERIAL PRIMARY KEY,
+    transaction_id SERIAL PRIMARY KEY,
     amount NUMERIC(10, 2) NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    transaction_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    upi_url TEXT NOT NULL
 );
