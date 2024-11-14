@@ -3,11 +3,19 @@ package com.bank.atm.simulator.service;
 import com.bank.atm.simulator.entity.CardlessWithdrawal;
 import com.bank.atm.simulator.repository.CardlessWithdrawalRepository;
 import com.bank.atm.simulator.repository.CashInventoryRepository;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.io.ByteArrayOutputStream;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -65,6 +73,26 @@ public class CardlessWithdraw {
     // Generates a UPI URL for the given amount
     private String generateUpiUrl(double amount) {
         return "upi://pay?pa=" + upiId + "&pn=Bank-ATM-Simulator&am=" + amount + "&cu=INR";
+    }
+
+    public String generateQrCode(String upiUrl) throws WriterException, IOException {
+        // Define QR code dimensions
+        int width = 300;
+        int height = 300;
+        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+        BitMatrix bitMatrix = qrCodeWriter.encode(upiUrl, BarcodeFormat.QR_CODE, width, height);
+
+        // Convert BitMatrix to a Base64 encoded string
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
+            byte[] qrCodeBytes = outputStream.toByteArray();
+            return Base64.encodeBase64String(qrCodeBytes);
+        }
+    }
+
+    public String generateUpiQrCode(double amount) throws WriterException, IOException {
+        String upiUrl = generateUpiUrl(amount);
+        return generateQrCode(upiUrl);
     }
 
     // Updates cash inventory by deducting the withdrawn amount from the denominations
